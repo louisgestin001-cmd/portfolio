@@ -1,0 +1,46 @@
+name: Two-Families Lean checks
+
+on:
+  push:
+    paths:
+      - "projects/two-families-lean/**"
+      - ".github/workflows/two-families-ci.yml"
+  pull_request:
+    paths:
+      - "projects/two-families-lean/**"
+      - ".github/workflows/two-families-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Lean project
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: projects/two-families-lean
+          build: true
+          test: false
+          lint: false
+
+      - name: Check forbidden proof shortcuts
+        working-directory: projects/two-families-lean
+        run: bash scripts/check_forbidden.sh
+
+      - name: Verify exhaustive small cases
+        working-directory: projects/two-families-lean
+        run: python3 scripts/verify_small_cases.py
+
+      - name: Run adversarial hypothesis checks
+        working-directory: projects/two-families-lean
+        run: python3 scripts/adversarial_checks.py
+
+      - name: Print project statistics
+        working-directory: projects/two-families-lean
+        run: python3 scripts/statistics.py
