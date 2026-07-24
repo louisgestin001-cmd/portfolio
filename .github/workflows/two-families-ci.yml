@@ -17,17 +17,32 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Build Lean project
+      - name: Set up Lean
         uses: leanprover/lean-action@v1
         with:
           lake-package-directory: projects/two-families-lean
-          build: true
+          auto-config: false
+          build: false
           test: false
           lint: false
+          use-mathlib-cache: false
+
+      - name: Update Lean dependencies
+        working-directory: projects/two-families-lean
+        run: lake update mathlib
+
+      - name: Download Mathlib build cache
+        working-directory: projects/two-families-lean
+        run: lake exe cache get
+
+      - name: Build Lean project
+        working-directory: projects/two-families-lean
+        run: lake build
 
       - name: Check forbidden proof shortcuts
         working-directory: projects/two-families-lean
