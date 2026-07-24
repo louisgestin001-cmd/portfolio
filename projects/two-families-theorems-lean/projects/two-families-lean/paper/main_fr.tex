@@ -1,0 +1,501 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{xcolor}
+
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible}
+\setlength{\emergencystretch}{3em}
+
+\newtheorem{theorem}{Théorème}
+\newtheorem{lemma}[theorem]{Lemme}
+\newtheorem{corollary}[theorem]{Corollaire}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\bind}[2]{\binom{#1}{#2}}
+\newcommand{\wedgep}[1]{\textstyle\bigwedge^{#1}}
+
+\title{Deux techniques de preuve pour le théorème des deux familles :\\
+permutations, puissances extérieures et position générale dans Lean 4}
+\author{Louis Gestin\\\small Élève indépendant, France\\\small \href{mailto:louis@gestin.net}{louis@gestin.net}}
+\date{Rapport technique indépendant, juillet 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Nous présentons une formalisation Lean~4 / Mathlib de la famille de théorèmes de
+Bollobás--Lovász--Frankl sur les deux familles, développée selon deux techniques de
+preuve mathématiquement distinctes. La première est une preuve par dénombrement de
+permutations de l'inégalité pondérée de Bollobás pour les paires d'ensembles
+~\cite{bollobas1965}, ainsi que de son corollaire uniforme. La seconde est une preuve par
+algèbre extérieure du théorème asymétrique de Lovász--Frankl pour les sous-espaces
+~\cite{lovasz1977}, reliée au théorème asymétrique de Frankl--Kalai pour les ensembles
+finis~\cite{frankl1982,kalai1984} par une construction en position générale fondée sur
+la courbe des moments sur~$\QQ$. Les cinq théorèmes principaux sont entièrement vérifiés
+par machine et ne dépendent que des axiomes standards \texttt{propext},
+\texttt{Classical.choice} et \texttt{Quot.sound}; le développement ne contient aucun
+\texttt{sorry}, \texttt{admit} ni axiome personnalisé. Le code comprend environ $1440$
+lignes réparties dans $13$ fichiers ($51$ déclarations, dont $37$ théorèmes) et se
+compile en environ $133$~s lorsque le cache Mathlib épinglé est déjà disponible. Notre
+thèse est que, bien que les deux preuves utilisent des bibliothèques différentes, elles
+produisent le même objet abstrait : un certificat triangulaire d'indépendance. Nous
+isolons plusieurs composants réutilisables pour Mathlib : un principe d'indépendance
+linéaire triangulaire, des lemmes d'annulation, de non-annulation et de concaténation
+pour les vecteurs extérieurs décomposables, un dénombrement exact sans division des
+événements de séparation, ainsi qu'un théorème de position générale pour la courbe des
+moments et ses conséquences sur les intersections d'espaces engendrés. Ce travail est
+une formalisation et n'introduit pas de nouveau résultat mathématique.
+\end{abstract}
+
+\section{Introduction}\label{sec:intro}
+
+Les théorèmes des deux familles sont des résultats fondamentaux de combinatoire
+extrémale. Dans leur forme uniforme la plus simple, ils affirment que, si
+$A_1,\dots,A_m$ sont des ensembles de taille $a$ et $B_1,\dots,B_m$ des ensembles de
+taille $b$, avec $A_i\cap B_i=\varnothing$ et $A_i\cap B_j\neq\varnothing$ pour
+$i\neq j$, alors $m\le\bind{a+b}{a}$. La version pondérée de
+Bollobás~\cite{bollobas1965} supprime l'hypothèse d'uniformité et donne la borne
+rationnelle exacte
+$\sum_i 1/\bind{|A_i|+|B_i|}{|A_i|}\le 1$. Lovász~\cite{lovasz1977} a remplacé les
+ensembles par des sous-espaces et démontré une version \emph{asymétrique}, où
+l'intersection croisée n'est exigée que pour $i<j$; sa preuve naturelle utilise
+l'algèbre extérieure. Frankl~\cite{frankl1982} et Kalai~\cite{kalai1984} ont ensuite
+transporté cette borne asymétrique vers les ensembles finis grâce à une représentation
+en position générale. Une présentation pédagogique apparaît dans les notes de
+Babai--Frankl~\cite{babaifrankl1992}.
+
+Ces preuves mettent en jeu deux techniques réellement différentes. L'inégalité pondérée
+se démontre en comptant, parmi tous les ordres linéaires de l'ensemble de base, les
+« événements de séparation » dans lesquels chaque $A_i$ apparaît entièrement avant
+$B_i$; la disjonction de ces événements pour des indices différents donne la borne. Le
+théorème sur les sous-espaces associe à chaque paire un vecteur extérieur décomposable et
+une application de multiplication, puis applique un argument triangulaire
+d'indépendance linéaire dans $\wedgep{a}V$, de dimension exactement
+$\bind{a+b}{a}$. Nous formalisons les deux preuves dans Lean~4~\cite{lean4}, au-dessus de
+Mathlib~\cite{mathlib2020}.
+
+\paragraph{Thèse.} Notre observation centrale est que les deux preuves, malgré
+l'utilisation de parties disjointes de la bibliothèque, convergent vers le même type de
+certificat abstrait : une famille d'objets « non nuls sur la diagonale et nuls strictement
+sous celle-ci ». Dans la preuve combinatoire, il s'agit d'événements de séparation deux à
+deux disjoints et de taille exactement calculée. Dans la preuve algébrique, il s'agit
+d'applications tests de multiplication extérieure qui alimentent un unique lemme
+générique, \lstinline{LinearIndependent.of_upperTriangular_maps}. La formalisation rend
+cette correspondance précise plutôt que simplement métaphorique.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+\item Un développement Lean complet, vérifié par le noyau, des théorèmes pondéré et
+  uniforme de Bollobás, du théorème de Lovász--Frankl pour les sous-espaces, du théorème
+  de position générale de la courbe des moments et du théorème asymétrique de
+  Frankl--Kalai pour les ensembles, selon deux voies de preuve indépendantes
+  (sections~\ref{sec:count}--\ref{sec:bridge}).
+\item Une infrastructure réutilisable pour laquelle nous n'avons pas trouvé
+d'équivalent direct dans Mathlib v4.28.0 : indépendance triangulaire obtenue par des
+applications tests, non-annulation et concaténation des décomposables extérieurs,
+dénombrement exact et sans division des énumérations séparatrices, et position générale
+de la courbe des moments avec des lemmes d'intersection des espaces engendrés
+(section~\ref{sec:reuse}).
+\item Un audit sémantique indépendant, des tests adversariaux des hypothèses et une
+évaluation mesurée (section~\ref{sec:eval}), permettant des affirmations prudentes sur
+l'originalité de la formalisation (section~\ref{sec:related}).
+\end{enumerate}
+
+\section{Vue d'ensemble mathématique}\label{sec:overview}
+
+Dans toute la suite, $\alpha$ est un type de base fini et $\iota$ un type d'indices fini;
+$n=|\alpha|$.
+
+\begin{theorem}[Bollobás pondéré]\label{thm:weighted}
+Pour des ensembles $A_i,B_i\subseteq\alpha$ tels que $A_i\cap B_i=\varnothing$ pour
+tout $i$ et $A_i\cap B_j\neq\varnothing$ pour tous $i\neq j$,
+\[ \sum_i \frac{1}{\bind{|A_i|+|B_i|}{|A_i|}}\le 1. \]
+\end{theorem}
+
+\begin{corollary}[Bollobás uniforme]\label{thm:uniform}
+Si, de plus, $|A_i|=a$ et $|B_i|=b$ pour tout $i$, alors
+$|\iota|\le\bind{a+b}{a}$. La borne est atteinte par la famille des complémentaires sur
+$\{1,\dots,a+b\}$.
+\end{corollary}
+
+\begin{theorem}[Lovász--Frankl, sous-espaces]\label{thm:subspace}
+Soit $\dim V=a+b$, et soient $U_i,W_i\le V$ tels que $\dim U_i=a$, $\dim W_i=b$,
+$U_i\cap W_i=0$ et $U_i\cap W_j\neq0$ pour $i<j$. Alors
+$m\le\bind{a+b}{a}$.
+\end{theorem}
+
+\begin{theorem}[Frankl--Kalai, ensembles]\label{thm:fk}
+Soient $A_i,B_i\subseteq\alpha$ avec $|A_i|=a$, $|B_i|=b$,
+$A_i\cap B_i=\varnothing$ et $A_i\cap B_j\neq\varnothing$ pour $i<j$. Alors
+$m\le\bind{a+b}{a}$.
+\end{theorem}
+
+\noindent\emph{Esquisses de preuve.} Pour le théorème~\ref{thm:weighted}, un ordre
+linéaire uniforme de $\alpha$ sépare $(A_i,B_i)$ avec une « probabilité »
+$1/\bind{|A_i|+|B_i|}{|A_i|}$. Les événements de séparation associés à deux indices
+distincts sont disjoints, car une paire croisée imposerait deux inégalités d'ordre
+contradictoires; la somme des inverses est donc au plus $1$. Nous formalisons cet
+argument par un dénombrement entier exact plutôt que par une probabilité. Pour le
+théorème~\ref{thm:subspace}, les vecteurs décomposables
+$u_i=\bigwedge U_i\in\wedgep{a}V$ et la multiplication par
+$w_j=\bigwedge W_j$ donnent des applications telles que $u_i\wedge w_i\neq0$ sur la
+diagonale et $u_i\wedge w_j=0$ pour $i<j$. La triangularité implique l'indépendance des
+$u_i$, puis $m\le\dim\wedgep{a}V=\bind{a+b}{a}$. Le théorème~\ref{thm:fk} suit en
+réalisant les ensembles comme des espaces engendrés par des vecteurs de la courbe des
+moments, de sorte que la disjonction devient une somme directe et qu'une intersection
+non vide fournit un vecteur commun non nul.
+
+\section{Architecture de la formalisation}\label{sec:arch}
+
+Le développement est modulaire et se divise en deux voies qui ne partagent que l'API de
+prédicats \lstinline{SetPairs.Basic}. La figure~\ref{fig:dep} montre le graphe acyclique
+des imports locaux, construit à partir des lignes
+\lstinline{import RequestProject.*} et vérifié dans
+\texttt{DEPENDENCY\_AUDIT.md}.
+
+\begin{figure}[t]
+\centering
+\begin{verbatim}
+                         SetPairs/Basic
+                         /            \
+          PermutationOrders          SkewSetPairs
+                |                      /        \
+          SeparationEvents           /          \
+                |             MomentCurve   TwoFamiliesSubspaces
+          WeightedBollobas                 /     |         \
+                |                Triangular  ExteriorDecomp  ExteriorMult
+             Uniform                        Independence
+                \                              /
+                 \____________ Main _________/    (+ Examples)
+\end{verbatim}
+\caption{Graphe des dépendances entre modules. Branche gauche : dénombrement de
+permutations. Branche droite : puissances extérieures et position générale. Les deux
+branches ne se rejoignent que dans \texttt{SetPairs/Basic} et dans \texttt{Main}.}
+\label{fig:dep}
+\end{figure}
+
+\begin{itemize}
+\item \texttt{SetPairs/} : \texttt{Basic} (prédicats), \texttt{PermutationOrders},
+  \texttt{SeparationEvents}, \texttt{WeightedBollobas}, \texttt{Uniform}.
+\item \texttt{LinearAlgebra/} : \texttt{TriangularIndependence},
+  \texttt{ExteriorDecomposable}, \texttt{ExteriorMultiplication},
+  \texttt{TwoFamiliesSubspaces}, \texttt{MomentCurve}.
+\item \texttt{SkewSetPairs}, \texttt{Examples}, \texttt{Main}.
+\end{itemize}
+
+\section{Dénombrement exact des permutations}\label{sec:count}
+
+Une \emph{énumération ordonnée} de $\alpha$ est une équivalence
+$e:\alpha\simeq\mathrm{Fin}\,n$; il en existe $n!$
+(\lstinline{card_orderEnumerations}, conséquence de
+\lstinline{Fintype.card_equiv}). La paire $(A,B)$ est \emph{séparée} par $e$ lorsque
+tout élément de $A$ précède tout élément de $B$ :
+\begin{verbatim}
+def Separates (e : OrderEnumeration a) (A B : Finset a) : Prop :=
+  forall {x}, x in A -> forall {y}, y in B -> e x < e y
+\end{verbatim}
+et $\mathrm{separationEvent}(A,B)$ est le \texttt{Finset} des énumérations qui
+satisfont cette propriété.
+
+\paragraph{Dénombrement exact.} Le coeur de l'argument est l'identité
+\[ |\mathrm{separationEvent}(A,B)|\cdot\bind{|A|+|B|}{|A|}=n!, \]
+obtenue à partir de la formule fermée
+(\lstinline{card_separationEvent_eq})
+\[ |\mathrm{separationEvent}(A,B)|=\bind{n}{a+b}\,a!\,b!\,(n-(a{+}b))!, \]
+où $a=|A|$, $b=|B|$ et $S=A\cup B$. La preuve repose sur une véritable équivalence de
+factorisation des ordres : une énumération séparatrice est déterminée par trois données
+indépendantes :
+\begin{itemize}
+\item l'ensemble de positions $P=e(S)\subseteq\mathrm{Fin}\,n$, de taille $a+b$, qui
+  fournit le facteur $\bind{n}{a+b}$;
+\item l'ordre relatif de $S$ dans $P$, avec tous les éléments de $A$ avant ceux de $B$,
+  qui fournit $a!\,b!$;
+\item l'ordre relatif de $S^{\mathsf c}$ dans $P^{\mathsf c}$, qui fournit
+  $(n-a-b)!$.
+\end{itemize}
+Plus précisément :
+\begin{itemize}
+\item \lstinline{card_separates_full} : lorsque $A\cup B=\mathrm{univ}$, les
+  énumérations séparatrices sont en bijection avec
+  $(A\simeq\mathrm{Fin}\,a)\times(B\simeq\mathrm{Fin}\,b)$, d'où $a!\,b!$. La
+  construction utilise deux injections explicites et les faits d'ordre
+  \lstinline{separates_val_lt} et \lstinline{card_le_separates_val}.
+\item \lstinline{card_separates_toP} transporte ce dénombrement le long de
+  l'isomorphisme ordonné $P\simeq_o\mathrm{Fin}(a+b)$.
+\item \lstinline{fiber_card_eq} identifie, pour un $P$ fixé, la fibre des énumérations
+  vérifiant $e(S)=P$ avec le produit de l'ordre relatif de $S$ et d'une équivalence entre
+  les complémentaires.
+\item \lstinline{card_separationEvent_eq} somme les tailles de ces fibres sur les
+  $\bind{n}{a+b}$ ensembles de positions, via
+  \lstinline{Finset.card_eq_sum_card_fiberwise}.
+\end{itemize}
+L'identité factorielle finale est obtenue \emph{sans division dans les naturels}, à
+partir de $\bind{a+b}{a}a!b!=(a+b)!$ et de
+$\bind{n}{a+b}(a+b)!(n-(a+b))!=n!$, en appliquant deux fois
+\lstinline{Nat.choose_mul_factorial_mul_factorial}.
+
+\paragraph{Pourquoi ne pas utiliser les probabilités ?} Une formulation probabiliste
+directe introduirait des mesures à valeurs dans $\mathbb{R}$ et des divisions, dont la
+gestion formelle serait plus lourde que l'identité entière. Elle masquerait également
+la structure des fibres, qui constitue le véritable coeur de la preuve. Le dénombrement
+entier peut en outre être contrôlé exactement par les tests de régression
+(section~\ref{sec:eval}).
+
+\paragraph{Disjonction et assemblage.} Les événements de séparation sont deux à deux
+disjoints. Si $x\in A_i\cap B_j$ et $y\in A_j\cap B_i$, séparer $(A_i,B_i)$ impose
+$e(x)<e(y)$, tandis que séparer $(A_j,B_j)$ impose $e(y)<e(x)$
+(\lstinline{separationEvents_disjoint}). C'est exactement à cet endroit que
+l'intersection croisée dans \emph{les deux directions} est utilisée. La somme des
+taille des événements disjoints satisfait $\sum_i|E_i|\le n!$; comme
+$1/\bind{|A_i|+|B_i|}{|A_i|}=|E_i|/n!$, on obtient
+\lstinline{weighted_bollobas}. Le corollaire uniforme
+\lstinline{uniform_bollobas} met en facteur l'inverse constant, et
+\lstinline{uniform_bollobas_sharp} formalise la famille des complémentaires qui atteint
+la borne.
+
+\section{Indépendance triangulaire et produits extérieurs}\label{sec:ext}
+
+\paragraph{Indépendance triangulaire.} Si des applications linéaires $T_j$ satisfont
+$T_j(u_j)\neq0$ et $T_j(u_i)=0$ pour $i<j$, alors les $u_i$ sont linéairement
+indépendants (\lstinline{LinearIndependent.of_upperTriangular_maps}) :
+\begin{verbatim}
+theorem LinearIndependent.of_upperTriangular_maps
+    (u : Fin m -> M) (T : Fin m -> M ->L[K] N)
+    (hdiag : forall j, T j (u j) != 0)
+    (hzero : forall {i j}, i < j -> T j (u i) = 0) :
+    LinearIndependent K u
+\end{verbatim}
+La preuve considère une combinaison nulle $\sum_i g_i u_i=0$, choisit le plus grand
+indice $j$ tel que $g_j\neq0$, puis applique $T_j$. Les termes d'indice $i<j$ sont
+annulés par \texttt{hzero}, et ceux d'indice $i>j$ ont un coefficient nul par maximalité.
+Il reste $g_jT_j(u_j)=0$, contradiction puisque $K$ est un corps. Le choix de l'indice
+maximal correspond à l'orientation triangulaire supérieure; le dual
+\lstinline{of_lowerTriangular_maps} utilise l'indice minimal.
+
+\paragraph{Vecteurs décomposables.} Le produit alterné
+$\iota\mathrm{Multi}\,K\,r\,v$ s'annule exactement lorsque $v$ est linéairement
+dépendante. Le sens « dépendance implique annulation » est fourni par
+\lstinline{AlternatingMap.map_linearDependent}; le sens de non-annulation
+(\texttt{\(\iota\)Multi\_ne\_zero\_of\_linearIndependent}, dans la puissance extérieure
+et dans l'algèbre extérieure) est déduit du lemme Mathlib
+\texttt{\(\iota\)Multi\_family\_linearIndependent\_field}. L'identité de concaténation
+$\iota\mathrm{Multi}\,a\,u\cdot\iota\mathrm{Multi}\,b\,w=
+\iota\mathrm{Multi}\,(a+b)\,(u\mathbin{+\!\!+}w)$
+(\texttt{\(\iota\)Multi\_mul\_\(\iota\)Multi}) transforme le produit de deux
+décomposables en le décomposable de la famille concaténée. Sa preuve repose sur une
+identité élément par élément entre \lstinline{List.ofFn} et \lstinline{Fin.append}.
+
+\paragraph{Théorème sur les sous-espaces.} Pour chaque $i$, nous choisissons des bases de
+$U_i$ et $W_i$ à l'aide de \lstinline{Module.finBasisOfFinrankEq}, en utilisant
+$\dim U_i=a$ et $\dim W_i=b$. On forme $u_i\in\wedgep{a}V$ et une application test
+$T_j=(\,\cdot\,*w_j)\circ\iota$, où $w_j$ est le décomposable associé à $W_j$.
+Alors $T_j(u_i)$ est le décomposable des bases concaténées. Il est non nul sur la
+diagonale, car $U_i\cap W_i=0$ rend la famille réunie indépendante
+(\lstinline{append_wedge_ne_zero}), et nul pour $i<j$, car
+$U_i\cap W_j\neq0$ la rend dépendante (\lstinline{append_wedge_eq_zero}). Le principe
+triangulaire donne
+$m\le\dim\wedgep{a}V=\bind{a+b}{a}$ par
+\lstinline{exteriorPower.finrank_eq}. Les cas dégénérés $a=0$, $b=0$ et $m=0$ ne
+nécessitent aucune séparation : les bases vides et
+$\iota\mathrm{Multi}\,K\,0=1$ sont traitées uniformément par l'algèbre extérieure.
+
+\section{Passage par la courbe des moments}\label{sec:bridge}
+
+Le vecteur de la courbe des moments est
+$v_x=(1,t_x,\dots,t_x^{d-1})\in\QQ^d$, où
+$t:\alpha\hookrightarrow\QQ$ est injective. Toute famille d'au plus $d$ vecteurs
+distincts de cette forme est linéairement indépendante
+(\lstinline{momentCurve_linearIndependent}). La preuve utilise l'interpolation
+polynomiale : pour isoler l'indice $i$, on prend
+$\prod_{j\neq i}(X-t_j)$, de degré $|s|-1<d$. Ce choix évite le développement du
+déterminant de Vandermonde et traite directement le cas \emph{rectangulaire} $|s|<d$,
+sans réduction artificielle à une matrice carrée.
+
+On en déduit
+$\dim\operatorname{span}\{v_x:x\in S\}=|S|$ lorsque $|S|\le d$
+(\lstinline{finrank_spanMomentCurve}), la trivialité de
+$\operatorname{span}(S)\cap\operatorname{span}(T)$ lorsque $S$ et $T$ sont disjoints et
+$|S|+|T|\le d$ (\lstinline{inf_spanMomentCurve_eq_bot}), et sa non-trivialité lorsque
+$S\cap T\neq\varnothing$ (\lstinline{inf_spanMomentCurve_ne_bot}). Dans ce dernier cas,
+un élément commun fournit un vecteur de la courbe des moments non nul, sa coordonnée
+d'indice zéro valant $1$. Le théorème de Frankl--Kalai injecte ensuite le type de base
+dans $\QQ$, via \lstinline{Fintype.equivFin} puis l'inclusion
+$\NN\hookrightarrow\QQ$, représente chaque ensemble par son espace engendré dans
+$\QQ^{a+b}$ et applique le théorème sur les sous-espaces. Le type de base peut être
+strictement plus grand que $a+b$; seule la dimension ambiante $d=a+b$ est contrainte.
+
+\section{Infrastructure réutilisable et lacunes de Mathlib}\label{sec:reuse}
+
+Le tableau~\ref{tab:correspondence} associe les objets mathématiques centraux à leur
+représentation Lean. Plusieurs composants sont génériques et n'ont pas été trouvés dans
+Mathlib v4.28.0 lors de notre recherche documentée
+(\texttt{MATHLIB\_PR\_PLAN.md}) : indépendance triangulaire par applications tests,
+non-annulation et concaténation des décomposables extérieurs, dénombrement exact des
+événements de séparation, et position générale de la courbe des moments avec ses lemmes
+d'intersection. Mathlib fournit déjà l'API des puissances extérieures, leur dimension
+$\dim\wedgep{a}V=\bind{\dim V}{a}$, le déterminant de Vandermonde et l'inégalité LYM,
+qui correspond à une autre technique de dénombrement par chaînes.
+
+\begin{table}[t]
+\centering\scriptsize
+\begin{tabular}{@{}llll@{}}
+\toprule
+Objet mathématique & Représentation Lean & Déclaration clé & Difficulté principale \\
+\midrule
+Ordre total & $\alpha\simeq\mathrm{Fin}\,n$ & \texttt{OrderEnumeration} & compter les bijections \\
+Événement de séparation & \texttt{Finset} filtré & \texttt{separationEvent} & taille exacte des fibres \\
+Décomposable extérieur & $\iota$\texttt{Multi}$\,K\,r\,v$ & \texttt{\(\iota\)Multi\_ne\_zero\_*} & non-annulation \\
+Test par multiplication & \texttt{mulRight} $\circ$ inclusion & \texttt{\(\iota\)Multi\_mul\_\(\iota\)Multi} & concaténation \\
+Vecteur moment & $\mathrm{Fin}\,d\to\QQ$ & \texttt{momentCurve} & indépendance rectangulaire \\
+Espace engendré & \texttt{Submodule.span} & \texttt{spanMomentCurve} & intersection / somme directe \\
+Intersection asymétrique & $i<j\to(A_i\cap B_j)\neq\varnothing$ & \texttt{SkewCrossIntersecting} & orientation \\
+\bottomrule
+\end{tabular}
+\caption{Correspondance entre la preuve informelle et Lean.}
+\label{tab:correspondence}
+\end{table}
+
+\begin{table}[t]
+\centering\scriptsize
+\begin{tabular}{@{}lllccl@{}}
+\toprule
+Résultat & Méthode & Déclaration Lean & Vérifié & Optimal & Dépendances \\
+\midrule
+Pondéré & dénombrement & \texttt{weighted\_bollobas} & oui & --- & compte séparateur \\
+Uniforme & dénombrement & \texttt{uniform\_bollobas} & oui & oui & pondéré \\
+Triangulaire & alg. linéaire & \texttt{of\_upperTriangular\_maps} & oui & --- & générique \\
+Sous-espaces & extérieur & \texttt{lovasz\_frankl\_subspaces} & oui & --- & triangulaire, extérieur \\
+Courbe des moments & interpolation & \texttt{momentCurve\_linearIndependent} & oui & --- & générique \\
+Frankl--Kalai & passage & \texttt{frankl\_kalai\_skew} & oui & oui & sous-espaces, moments \\
+\bottomrule
+\end{tabular}
+\caption{Couverture des théorèmes. « Optimal » signifie qu'une famille atteignant la
+borne est formalisée; la construction par complémentaires convient aux bornes uniforme
+et asymétrique.}
+\label{tab:coverage}
+\end{table}
+
+\section{Évaluation}\label{sec:eval}
+
+\paragraph{Versions.} Lean \texttt{v4.28.0}; Mathlib épinglé à
+\texttt{v4.28.0}, commit \texttt{8f9d9cff}. Une compilation propre du projet avec les
+artefacts Mathlib déjà présents réussit en $8039$ tâches et environ $133$~s dans notre
+environnement. Une reconstruction froide doit d'abord télécharger les dépendances
+épinglées et récupérer le cache Mathlib; elle est donc nettement plus longue.
+
+\paragraph{Taille.} Le développement contient $13$ fichiers Lean, $1438$ lignes au
+total ($1175$ non vides) et $51$ déclarations : $37$ théorèmes ou lemmes, $10$
+définitions, $2$ abréviations et $2$ instances. Le module le plus long est
+\texttt{SeparationEvents.lean} avec $481$ lignes, devant
+\texttt{MomentCurve.lean} ($179$) et \texttt{TwoFamiliesSubspaces.lean} ($144$).
+
+\paragraph{Axiomes.} Pour chaque théorème principal, \lstinline{#print axioms} affiche
+exactement \lstinline{[propext, Classical.choice, Quot.sound]}, sans
+\lstinline{sorryAx}. Le dépôt ne contient aucun \lstinline{sorry}, \lstinline{admit},
+\lstinline{axiom} personnalisé, \lstinline{unsafe} ou
+\lstinline{@[implemented_by]}, comme le vérifie
+\texttt{scripts/check\_forbidden.sh}.
+
+\paragraph{Tests de régression.} Le script
+\texttt{scripts/verify\_small\_cases.py} vérifie en arithmétique rationnelle exacte
+l'inégalité pondérée pour des ensembles de base de taille $2$ à $5$, la borne uniforme
+pour les paramètres admissibles jusqu'à une taille de base $6$, la borne asymétrique
+jusqu'à une taille $4$, ainsi que la construction optimale. Le script
+\texttt{scripts/adversarial\_checks.py} fournit des contre-exemples exacts lorsque les
+hypothèses principales sont retirées. Des tests Lean avec \lstinline{decide} et
+\lstinline{norm_num} contrôlent également des valeurs binomiales, cinq cas limites du
+dénombrement fermé et deux sommes adversariales strictement supérieures à $1$. Ces
+calculs servent de tests de régression et ne remplacent pas les preuves vérifiées par le
+noyau.
+
+\paragraph{Composants réutilisables.} L'infrastructure générique des
+sections~\ref{sec:ext}--\ref{sec:reuse} -- indépendance triangulaire, résultats sur les
+décomposables extérieurs, position générale de la courbe des moments et dénombrement des
+événements de séparation -- constitue l'essentiel des candidats d'extraction vers
+Mathlib décrits dans \texttt{MATHLIB\_PR\_PLAN.md}.
+
+\paragraph{Approches abandonnées ou révisées.} La première tentative de preuve de
+l'indépendance sur la courbe des moments utilisait une matrice de Vandermonde
+rectangulaire; elle a été remplacée par l'interpolation polynomiale, plus directe. Le
+théorème sur les sous-espaces avait d'abord été prévu avec des séparations explicites
+pour $a=0$, $b=0$ et $m=0$, devenues inutiles grâce à l'algèbre extérieure. Enfin, le
+dénombrement des événements de séparation avait initialement été formulé par une
+division dans les naturels, puis remplacé par une identité multiplicative exacte afin
+d'éviter les obligations de divisibilité.
+
+\section{Travaux liés}\label{sec:related}
+
+Les sources mathématiques originales sont Bollobás~\cite{bollobas1965} pour les paires
+d'ensembles pondérées et uniformes, Lovász~\cite{lovasz1977} pour la méthode par algèbre
+extérieure sur les sous-espaces, et Frankl~\cite{frankl1982} ainsi que
+Kalai~\cite{kalai1984} pour les extensions asymétriques. Les notes de
+Babai--Frankl~\cite{babaifrankl1992} en donnent une exposition. Mathlib
+~\cite{mathlib2020} fournit les puissances extérieures, l'algèbre extérieure graduée, le
+déterminant de Vandermonde et l'inégalité LYM. Lors de notre recherche documentée, nous
+n'y avons pas trouvé l'inégalité de Bollobás pour les paires d'ensembles, les versions
+uniforme ou asymétrique du théorème des deux familles, ni le théorème de Lovász pour les
+sous-espaces.
+
+Le code local de Mathlib a été recherché directement. Les index et bibliothèques
+externes ont été examinés dans la mesure permise par l'environnement d'audit; une
+nouvelle vérification en ligne reste recommandée avant toute affirmation d'originalité
+plus forte. Nous n'avons pas localisé de formalisation antérieure réunissant dans un
+même développement la preuve pondérée par permutations, le théorème de
+Lovász--Frankl pour les sous-espaces et la réduction par courbe des moments vers le
+théorème asymétrique de Frankl--Kalai. Nous ne prétendons pas pour autant qu'il s'agit de
+la « première formalisation » de chacun de ces résultats pris isolément.
+
+\section{Leçons et limites}\label{sec:lim}
+
+\paragraph{Leçons.} (i) Dans un assistant de preuve, les identités entières exactes sont
+souvent préférables aux formulations probabilistes, aussi bien pour la structure de la
+preuve que pour les tests. (ii) Une mise en place algébrique uniforme peut absorber les
+cas dégénérés au lieu de multiplier les séparations de cas. (iii) La position générale
+rectangulaire doit être réellement démontrée, ici par interpolation, et non déduite par
+analogie avec la matrice carrée de Vandermonde. (iv) Les transports entre sous-types,
+cardinaux et ensembles de positions constituent une part importante du coût de la
+preuve combinatoire; ils sont gérés par des isomorphismes d'ordre explicites.
+
+\paragraph{Limites.} Le développement utilise le choix classique et suppose les types
+de base et d'indices finis. Il ne formalise pas la classification complète des cas
+d'égalité, mais seulement une construction par complémentaires atteignant la borne. La
+couche de courbe des moments est formulée sur $\QQ$ plutôt que sur un corps infini
+arbitraire. L'ensemble du projet ayant bénéficié d'une assistance importante de systèmes d'IA---notamment pour le cadrage, les preuves, le code, les tests, la rédaction, la traduction, les audits et la préparation du dépôt---,
+la vérification par le noyau garantit la correction \emph{par rapport aux énoncés
+formels}, mais ne suffit pas à garantir leur fidélité sémantique. Celle-ci est examinée
+séparément dans \texttt{INDEPENDENT\_PROOF\_AUDIT.md} et
+\texttt{SEMANTIC\_AUDIT.md}; toutes les affirmations restent sous la responsabilité de
+l'auteur humain, conformément à \texttt{AI\_USE\_STATEMENT.md}.
+
+\section{Conclusion}\label{sec:concl}
+
+Nous avons formalisé dans Lean~4, selon deux techniques de preuve distinctes, la famille
+de théorèmes de Bollobás--Lovász--Frankl sur les deux familles : les versions pondérée
+et uniforme de Bollobás par dénombrement de permutations, puis les théorèmes de
+Lovász--Frankl pour les sous-espaces et de Frankl--Kalai pour les ensembles asymétriques
+par puissances extérieures et position générale de la courbe des moments. Le
+développement contient aussi une infrastructure algébrique et combinatoire réutilisable.
+Les cinq théorèmes principaux sont vérifiés par le noyau sous les axiomes standards. Au-
+delà des résultats particuliers, la formalisation isole une structure commune de
+certificat triangulaire derrière deux preuves en apparence éloignées, et organise
+plusieurs composants dans une forme proche de celle attendue pour une future intégration
+à Mathlib. Ce travail ne revendique aucun nouveau résultat mathématique.
+
+\section*{Disponibilité de l'artefact}
+Les sources Lean complètes, les scripts, les documents d'audit, les sources LaTeX et les
+versions française et anglaise de ce rapport sont fournis dans l'archive du projet. Le
+développement est épinglé sur Lean \texttt{v4.28.0} et Mathlib
+\texttt{v4.28.0}; la commande principale de compilation est
+\lstinline{lake build}.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
