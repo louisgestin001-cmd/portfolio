@@ -1,0 +1,18 @@
+task,model,params,seeds,metric,mean,notes
+delayed_blank_40,NG-StateMin-U1,122,3,accuracy,1.0000,
+delayed_blank_40,U1-ReLU,122,3,accuracy,1.0000,
+delayed_blank_40,U1-Tanh,122,3,accuracy,1.0000,
+delayed_blank_40,Elman-Tanh,722,3,accuracy,1.0000,
+delayed_blank_40,Elman-ReLU,722,3,accuracy,0.5031,failed to train
+delayed_noise_40,NG-StateMin-U1,122,3,accuracy,0.9997,sigma=0.20
+delayed_noise_40,U1-ReLU,122,3,accuracy,1.0000,sigma=0.20
+delayed_noise_40,U1-Tanh,122,3,accuracy,0.8475,sigma=0.20
+delayed_noise_40,Elman-Tanh,722,3,accuracy,1.0000,sigma=0.20
+adding_40,NG-StateMin-U1,97,3,MAE,0.3189,
+adding_40,U1-ReLU,97,3,MAE,0.3195,
+adding_40,U1-Tanh,97,3,MAE,0.3137,
+adding_40,Elman-ReLU,697,3,MAE,0.1391,high variance
+sequential_digits_64,NG-StateMin-U1,394,3,accuracy,0.2533,8x8 sklearn digits
+sequential_digits_64,U1-ReLU,394,3,accuracy,0.2141,8x8 sklearn digits
+sequential_digits_64,U1-Tanh,394,3,accuracy,0.3578,8x8 sklearn digits
+sequential_digits_64,Elman-Tanh,1450,3,accuracy,0.8459,8x8 sklearn digits
