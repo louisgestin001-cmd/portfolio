@@ -12,8 +12,8 @@ import json
 import os
 import random
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 os.environ.setdefault("OMP_NUM_THREADS", "4")
 os.environ.setdefault("MKL_NUM_THREADS", "4")
