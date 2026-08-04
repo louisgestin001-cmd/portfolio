@@ -1,0 +1,49 @@
+name: NG-StateMin CI
+
+on:
+  push:
+    paths:
+      - "projects/ng-statemin-u1/**"
+      - ".github/workflows/ng-statemin-ci.yml"
+  pull_request:
+    paths:
+      - "projects/ng-statemin-u1/**"
+      - ".github/workflows/ng-statemin-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/ng-statemin-u1
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: projects/ng-statemin-u1/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+      - name: Lint
+        run: ruff check .
+      - name: Test
+        run: pytest
+      - name: Smoke benchmark
+        run: |
+          python benchmarks/benchmark.py \
+            --task delayed_blank \
+            --models NG-StateMin-U1 U1-ReLU \
+            --steps 10 \
+            --seeds 1 \
+            --hidden 8 \
+            --batch-size 16 \
+            --out /tmp/ng-statemin-smoke.json

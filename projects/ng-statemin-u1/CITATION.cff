@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this experimental artifact, please cite the repository and exact commit."
+title: "NG-StateMin-U1: A Minimal Piecewise-Linear Recurrent State Law"
+type: software
+authors:
+  - family-names: Gestin
+    given-names: Louis
+repository-code: "https://github.com/louisgestin001-cmd/portfolio/tree/main/projects/ng-statemin-u1"
+version: 0.1.0
+date-released: 2026-08-04
+license: MIT
+keywords:
+  - recurrent neural network
+  - piecewise-linear dynamics
+  - neural architecture research
+  - oscillatory memory
+  - PyTorch
+abstract: >-
+  Preliminary implementation and experimental analysis of the recurrent law
+  s_t = min(x_t - s_{t-1}, -x_t), including its exact period-two memory regime
+  and parity-dependent failure mode.

@@ -9,8 +9,32 @@ French student interested in **artificial intelligence, formal mathematics, prog
 This repository is the central home for my technical projects. Each project includes its own documentation, reproducibility instructions, limitations, and—when relevant—a precise statement describing how artificial intelligence was used.
 
 [![Two-Families Lean checks](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/two-families-ci.yml/badge.svg)](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/two-families-ci.yml)
+[![NG-StateMin checks](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-statemin-ci.yml/badge.svg)](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-statemin-ci.yml)
 
 ## Projects
+
+### NG-StateMin-U1
+
+A preliminary PyTorch research artifact for the recurrent law
+
+\[
+s_t = y_t = \min(x_t-s_{t-1},-x_t).
+\]
+
+**Highlights**
+
+- parameter-free elementwise recurrent transition;
+- exact algebraic analysis of its `-1` or `0` temporal derivative;
+- demonstrated period-two memory regime;
+- explicit odd/even length stress test revealing a severe parity failure mode;
+- fair same-parameter comparisons with scalar ReLU and tanh recurrences;
+- reusable package, tests, benchmark script, results, CI, citation metadata, and AI-use disclosure.
+
+**Open the project:** [`projects/ng-statemin-u1/`](projects/ng-statemin-u1/README.md)
+
+**Experimental report:** [`docs/REPORT.md`](projects/ng-statemin-u1/docs/REPORT.md)
+
+> Preliminary result: promising as an oscillatory memory primitive, not yet a general replacement for standard recurrent cells.
 
 ### Two-Families Theorems in Lean 4
 
@@ -36,9 +60,10 @@ A reproducible Lean 4 / Mathlib development covering classical two-families resu
 
 ## Compétences présentées
 
-- structuration et documentation d'un projet technique complexe ;
+- structuration et documentation de projets techniques complexes ;
 - programmation en Python et formalisation vérifiée avec Lean 4 ;
-- tests reproductibles et intégration continue ;
+- expérimentation reproductible en apprentissage automatique ;
+- tests automatisés et intégration continue ;
 - rédaction technique bilingue français–anglais ;
 - utilisation transparente et critique des outils d'intelligence artificielle.
 
@@ -49,21 +74,27 @@ portfolio/
 ├── README.md
 ├── LICENSE
 ├── .github/workflows/
+│   ├── ng-statemin-ci.yml
 │   └── two-families-ci.yml
 └── projects/
+    ├── ng-statemin-u1/
+    │   ├── benchmarks/
+    │   ├── docs/
+    │   ├── results/
+    │   ├── src/
+    │   └── tests/
     └── two-families-lean/
         ├── RequestProject/
         ├── paper/
         ├── scripts/
-        ├── docs/
-        └── README.md
+        └── docs/
 ```
 
 Future projects will be added under `projects/`, while this README remains the main index.
 
 ## AI transparency
 
-Artificial intelligence is treated as a development tool, not hidden authorship. The scope of AI assistance is documented inside each relevant project. For the current Lean project, AI contributed substantially to planning, research support, proof development, code, tests, documentation, translation, auditing, and presentation. I directed the work, selected the verification strategy and final material, and remain responsible for understanding and presenting the published claims.
+Artificial intelligence is treated as a development tool, not hidden authorship. The scope of AI assistance is documented inside each relevant project. AI contributed substantially to planning, research support, code, tests, documentation, auditing, and presentation. I directed the work, selected the verification strategies and final material, and remain responsible for understanding and presenting the published claims.
 
 ## License
 
