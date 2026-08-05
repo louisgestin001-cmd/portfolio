@@ -2,19 +2,20 @@
 
 [![NG Cell Lab CI](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-cell-lab-ci.yml/badge.svg)](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-cell-lab-ci.yml)
 
-**NG Cell Lab** is a reproducible research zoo for compact recurrent and collectively modulated neural-cell laws.
+**NG Cell Lab** is a reproducible research zoo for compact recurrent cells, collective neural operators, and heterogeneous MLP blocks.
 
-The project currently contains five cells:
+The project currently contains five recurrent/collective cells and one feed-forward block:
 
 1. **NG-StateMin-U1** — a minimal piecewise-linear period-two memory;
 2. **NG-ShiftCompare-Mul** — a shifted multiplicative recurrent comparator;
 3. **NG-EnergyMax-1** — a global-energy-modulated two-frame operator;
 4. **NG-EnergyMax-2** — a derived sparse event/extremum memory;
-5. **NG-LagMean-1** — a rank-one delayed collective modulator.
+5. **NG-LagMean-1** — a rank-one delayed collective modulator;
+6. **NG-TriSpecies-1:2:3** — a three-species heterogeneous MLP with compressive, conservative, and divisively regulated branches.
 
 The goal is not to rename ordinary RNNs. Each law is implemented exactly, tested structurally, benchmarked against useful baselines, and documented with both positive results and failure modes.
 
-> **Research status:** preliminary. The repository does not claim established literature-level novelty, state-of-the-art performance, or that these cells replace RNN, GRU, LSTM, SSM, or attention architectures.
+> **Research status:** preliminary. The repository does not claim established literature-level novelty, state-of-the-art performance, or that these candidates replace established RNN, GRU, LSTM, SSM, attention, or gated-MLP architectures.
 
 ## Installation
 
@@ -23,6 +24,10 @@ cd projects/ng-cell-lab
 python -m pip install -e ".[test]"
 pytest -q
 python benchmarks/diagnostics.py
+
+# Optional Digits benchmark for NG-TriSpecies
+python -m pip install -e ".[benchmark]"
+python benchmarks/trispecies_digits.py --quick
 ```
 
 ## Common API
@@ -39,13 +44,27 @@ print(y.shape)           # [8, 100, 64]
 print(final_state.shape) # [8, 64]
 ```
 
-Every cell follows:
+Every recurrent cell follows:
 
 ```python
 y_t, s_t = cell(x_t, s_previous)
 ```
 
 `NGLagMean1` is the exception in state shape: it stores one scalar per sample while emitting a full hidden vector.
+
+## Heterogeneous MLP block
+
+```python
+import torch
+from ng_cell_lab import NGTriSpeciesMLP
+
+block = NGTriSpeciesMLP(input_dim=512, hidden_dim=1024, output_dim=512)
+x = torch.randn(8, 128, 512)
+y = block(x)
+print(y.shape)  # [8, 128, 512]
+```
+
+The default allocation is A:B:C = `3:2:1`, corresponding to approximately 50%, 33%, and 17% of the hidden coordinates. See [NG-TriSpecies](docs/TRISPECIES.md) for equations, preliminary results, and the ablation showing that heterogeneity is not yet proven to cause the gain.
 
 ## Cell overview
 
@@ -56,8 +75,6 @@ y_t, s_t = cell(x_t, s_previous)
 | NG-EnergyMax-1 | previous input vector | mean absolute energy × current input, then `max` | one-step transient comparison | no memory beyond one step; quadratic scaling |
 | NG-EnergyMax-2 | vector | bounded energy gate + max-absolute event memory | long sparse event memory without parity failure | poor ordered dense-sequence representation |
 | NG-LagMean-1 | scalar | previous layer mean × current coordinates | two-frame multiplicative/XOR-like modulation | rank-one, one-step, LayerNorm collapse |
-
-See [Cell cards](docs/CELLS.md) for equations and mathematical diagnostics, and [Results](docs/RESULTS.md) for the experimental evidence.
 
 ## Important findings
 
@@ -77,17 +94,23 @@ The derived EnergyMax-2 variant removes the quadratic energy growth, preserves s
 
 LagMean transmits only the mean direction. Its cross-time Jacobian has rank at most one, it is blind to mean-zero patterns, and ordinary LayerNorm makes its dynamic state almost constant.
 
+### 5. NG-TriSpecies is the strongest feed-forward candidate so far
+
+On the preliminary parameter-matched Digits experiment, NG-TriSpecies improved clean, low-data, and noisy accuracy over GELU, ReLU, SwiGLU, and GEGLU. The critical ablation also showed that species A alone and a 1:1:1 mixture were at least as strong on clean Digits, so the current evidence supports the block but does not yet prove the proposed 3:2:1 heterogeneity.
+
 ## Repository structure
 
 ```text
 ng-cell-lab/
 ├── src/ng_cell_lab/
-│   ├── cells.py          # exact candidate laws
+│   ├── cells.py          # exact recurrent/collective laws
+│   ├── mlp.py            # NG-TriSpecies heterogeneous MLP
 │   ├── sequence.py       # batch-first scan wrapper
 │   └── registry.py       # searchable cell metadata
 ├── tests/                # algebraic and structural tests
-├── benchmarks/           # fast CI diagnostics
-├── results/              # normalized result table
+├── benchmarks/           # fast diagnostics and parameter-matched reruns
+├── experiments/archive/  # original standalone benchmark scripts
+├── results/              # normalized and source result tables
 ├── docs/                 # equations, findings, protocol caveats, roadmap
 ├── AI_USE_STATEMENT.md
 ├── CITATION.cff
@@ -97,13 +120,13 @@ ng-cell-lab/
 
 ## Reproducibility and comparison warning
 
-The result table combines several preliminary experiments conducted at different stages. A row is only directly comparable with rows sharing the same `protocol_id`. The normalized table records the number of seeds, metric, task, and setting to prevent accidental apples-to-oranges claims.
+The result tables combine several preliminary experiments conducted at different stages. A row is only directly comparable with rows sharing the same `protocol_id`. The normalized table records the number of seeds, metric, task, and source artifact to prevent accidental apples-to-oranges claims.
 
 For a publication-quality comparison, the next milestone is a unified runner with identical widths, parameter budgets, optimization schedules, data splits, and at least 10 seeds per task.
 
-## Cell provenance
+## Candidate provenance
 
-- **User-supplied candidates:** NG-StateMin-U1, NG-ShiftCompare-Mul, NG-EnergyMax-1, NG-LagMean-1.
+- **User-supplied candidates:** NG-StateMin-U1, NG-ShiftCompare-Mul, NG-EnergyMax-1, NG-LagMean-1, NG-TriSpecies-1:2:3.
 - **Derived variant:** NG-EnergyMax-2 was proposed after diagnosing EnergyMax-1's one-step memory and quadratic amplitude growth.
 
 The [AI-use statement](AI_USE_STATEMENT.md) describes the role of AI assistance.

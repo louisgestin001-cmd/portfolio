@@ -16,32 +16,34 @@ This repository is the central home for my technical projects. Each project incl
 
 ### NG Cell Lab
 
-A unified PyTorch research zoo for compact recurrent and collectively modulated neural-cell laws.
+A unified PyTorch research zoo for compact recurrent cells, collective neural operators, and heterogeneous MLP blocks.
 
-**Cells currently included**
+**Candidates currently included**
 
 - **NG-StateMin-U1:** minimal piecewise-linear oscillatory memory;
 - **NG-ShiftCompare-Mul:** shifted multiplicative recurrent comparator;
 - **NG-EnergyMax-1:** energy-modulated two-frame operator;
 - **NG-EnergyMax-2:** derived sparse event/extremum memory;
-- **NG-LagMean-1:** rank-one delayed collective modulator.
+- **NG-LagMean-1:** rank-one delayed collective modulator;
+- **NG-TriSpecies-1:2:3:** heterogeneous MLP with compressive, conservative, and divisively regulated species.
 
 **Highlights**
 
-- exact equations and a common `(input, state) -> (output, next_state)` API;
-- algebraic tests for memory horizon, period-two behavior, clipping, and collective-state collapse;
+- exact equations, a common recurrent-cell API, and a reusable feed-forward block API;
+- algebraic tests for memory horizon, period-two behavior, clipping, collective-state collapse, and species allocation;
 - normalized results with protocol identifiers to prevent unfair comparisons;
+- parameter-matched comparison of NG-TriSpecies with GELU, ReLU, SwiGLU, and GEGLU;
 - explicit documentation of positive results, negative results, and structural failure modes;
 - CI on Python 3.10 and 3.12;
 - transparent distinction between user-supplied candidates and derived variants.
 
 **Open the project:** [`projects/ng-cell-lab/`](projects/ng-cell-lab/README.md)
 
-**Equations and diagnostics:** [`docs/CELLS.md`](projects/ng-cell-lab/docs/CELLS.md)
+**NG-TriSpecies analysis:** [`docs/TRISPECIES.md`](projects/ng-cell-lab/docs/TRISPECIES.md)
 
 **Experimental results:** [`docs/RESULTS.md`](projects/ng-cell-lab/docs/RESULTS.md)
 
-> Preliminary research: the cells are currently best viewed as specialized primitives rather than replacements for standard RNN, GRU, LSTM, SSM, or attention architectures.
+> Preliminary research: the recurrent candidates are specialized primitives, while NG-TriSpecies is a promising feed-forward block whose proposed species complementarity still requires larger Transformer-scale validation.
 
 The original standalone **NG-StateMin-U1** artifact remains available at [`projects/ng-statemin-u1/`](projects/ng-statemin-u1/README.md) for its initial package and benchmark history.
 
@@ -90,6 +92,7 @@ portfolio/
     ├── ng-cell-lab/
     │   ├── benchmarks/
     │   ├── docs/
+    │   ├── experiments/
     │   ├── results/
     │   ├── src/
     │   └── tests/

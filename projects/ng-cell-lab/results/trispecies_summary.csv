@@ -1,0 +1,21 @@
+protocol_id,model,metric,mean,std,seeds,parameters,notes
+trispecies_digits_clean_v1,GELU,accuracy,0.9733,0.0050,5,approximately_9000,parameter-matched exploratory run
+trispecies_digits_clean_v1,ReLU,accuracy,0.9782,0.0019,5,approximately_9000,parameter-matched exploratory run
+trispecies_digits_clean_v1,SwiGLU,accuracy,0.9787,0.0012,5,8970,parameter-matched exploratory run
+trispecies_digits_clean_v1,GEGLU,accuracy,0.9804,0.0024,5,8970,parameter-matched exploratory run
+trispecies_digits_clean_v1,NG-TriSpecies-3:2:1,accuracy,0.9849,0.0010,5,8970,provisional candidate name 1:2:3; actual A:B:C population 3:2:1
+trispecies_digits_lowdata_v1,GELU,accuracy,0.9396,0.0029,5,approximately_9000,20 percent of training set
+trispecies_digits_lowdata_v1,ReLU,accuracy,0.9427,0.0040,5,approximately_9000,20 percent of training set
+trispecies_digits_lowdata_v1,SwiGLU,accuracy,0.9409,0.0034,5,8970,20 percent of training set
+trispecies_digits_lowdata_v1,GEGLU,accuracy,0.9431,0.0020,5,8970,20 percent of training set
+trispecies_digits_lowdata_v1,NG-TriSpecies-3:2:1,accuracy,0.9578,0.0047,5,8970,20 percent of training set
+trispecies_digits_noise04_v1,GELU,accuracy,0.6356,,5,approximately_9000,Gaussian test noise sigma 0.4
+trispecies_digits_noise04_v1,ReLU,accuracy,0.6585,,5,approximately_9000,Gaussian test noise sigma 0.4
+trispecies_digits_noise04_v1,SwiGLU,accuracy,0.6407,,5,8970,Gaussian test noise sigma 0.4
+trispecies_digits_noise04_v1,GEGLU,accuracy,0.6378,,5,8970,Gaussian test noise sigma 0.4
+trispecies_digits_noise04_v1,NG-TriSpecies-3:2:1,accuracy,0.6926,,5,8970,Gaussian test noise sigma 0.4
+trispecies_ablation_clean_v1,Species-A-only,accuracy,0.9853,,3,8970,heterogeneity not proven
+trispecies_ablation_clean_v1,Species-B-only,accuracy,0.9844,,3,8970,heterogeneity not proven
+trispecies_ablation_clean_v1,Species-C-only,accuracy,0.9844,,3,8970,heterogeneity not proven
+trispecies_ablation_clean_v1,NG-TriSpecies-1:1:1,accuracy,0.9853,,3,8970,heterogeneity not proven
+trispecies_ablation_clean_v1,NG-TriSpecies-3:2:1,accuracy,0.9849,,5,8970,heterogeneity not proven
