@@ -1,0 +1,24 @@
+protocol_id,task,model,setting,seeds,metric,value,interpretation
+statemin_v1,delayed_noise_40,NG-StateMin-U1,sigma_0.20,3,accuracy,0.9997,fixed even delay hides phase pathology
+statemin_v1,sequential_digits_64,NG-StateMin-U1,original,3,accuracy,0.2533,limited general sequence representation
+statemin_v1,sequential_digits_64,U1-Tanh,original,3,accuracy,0.3578,same-protocol comparison
+statemin_v1,sequential_digits_64,Elman-Tanh,original,3,accuracy,0.8459,full recurrent mixing much stronger
+statemin_v1,adding_40,NG-StateMin-U1,original,3,mae,0.3189,near weak predictor
+shift_v1,delayed_noise_40,NG-ShiftCompare-Mul,sigma_0.20,3,accuracy,0.9997,fixed even delay hides phase pathology
+shift_v1,sequential_digits_64,NG-ShiftCompare-Mul,original,3,accuracy,0.4274,more expressive than StateMin in related protocol
+shift_v1,adding_40,NG-ShiftCompare-Mul,original,3,mae,0.3233,poor accumulation
+energy_v2,noisy_delay_40,NG-EnergyMax-2,rho_0.99,3,accuracy,0.9993,no parity pathology
+energy_v2,noisy_delay_80,NG-EnergyMax-2,rho_0.99,3,accuracy,0.9517,decay visible beyond training range
+energy_v2,noisy_delay_120,NG-EnergyMax-2,rho_0.99,3,accuracy,0.6730,rho too low for very long delay
+energy_v2,rho_sweep_240,NG-EnergyMax-2,rho_0.999,1,accuracy,0.9920,long sparse memory
+energy_v2,latest_write,NG-EnergyMax-2,rho_0.999,1,accuracy,1.0000,new event can overwrite through decay
+energy_v2,latest_write,NG-EnergyMax-2,rho_1.0,1,accuracy,0.7500,historical extremum can become frozen
+energy_v2,adding,NG-EnergyMax-2,rho_0.99,3,mae,0.1918,improved multi-event storage
+energy_v2,adding,NG-EnergyMax-1,original,3,mae,0.3341,one-step baseline
+energy_v2,sequential_digits,NG-EnergyMax-2,rho_0.99,2,accuracy,0.0985,hard extremum memory loses order
+lagmean_v1,recall,NG-LagMean-1,length_2,3,accuracy,1.0000,exact one-step use
+lagmean_v1,recall,NG-LagMean-1,length_3,3,accuracy,0.4967,no memory after an additional step
+lagmean_v1,lag_product,NG-LagMean-1,raw_mean,3,accuracy,1.0000,bilinear delayed modulation succeeds
+lagmean_v1,lag_product,NG-LagMean-1,layernorm_centered,3,accuracy,0.4890,centering destroys collective signal
+lagmean_v1,mean_zero,NG-LagMean-1,balanced_pattern,3,accuracy,0.4875,blind to directions orthogonal to mean
+lagmean_v1,sequential_digits,NG-LagMean-1,quick,3,accuracy,0.2141,two-frame context helps but remains weak
