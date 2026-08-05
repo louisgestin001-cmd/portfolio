@@ -10,11 +10,11 @@ AI assistance contributed to:
 - identifying failure modes and proposing derived variants;
 - writing tests, documentation, packaging, and continuous integration files.
 
-Louis Gestin supplied and directed the candidate-cell research program, selected which candidates to investigate, reviewed the conclusions, and is responsible for claims made when presenting or extending this project.
+Louis Gestin supplied and directed the candidate research program, selected which candidates to investigate, reviewed the conclusions, and is responsible for claims made when presenting or extending this project.
 
 The repository deliberately distinguishes:
 
-1. **user-supplied candidates**, such as NG-StateMin-U1, NG-ShiftCompare-Mul, NG-EnergyMax-1, and NG-LagMean-1;
+1. **user-supplied candidates**, such as NG-StateMin-U1, NG-ShiftCompare-Mul, NG-EnergyMax-1, NG-LagMean-1, and NG-TriSpecies-1:2:3;
 2. **derived research variants**, such as NG-EnergyMax-2;
 3. **verified mathematical properties**;
 4. **preliminary empirical observations**, which may depend on protocol and random seed;
