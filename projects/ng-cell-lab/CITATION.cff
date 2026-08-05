@@ -1,11 +1,11 @@
 cff-version: 1.2.0
-title: "NG Cell Lab: Experimental Recurrent Cell Zoo"
+title: "NG Cell Lab: Experimental Neural Cell and Heterogeneous MLP Zoo"
 message: "If this research artifact helps your work, cite the repository and the exact commit used."
 type: software
 authors:
   - family-names: Gestin
     given-names: Louis
-version: 0.1.0
+version: 0.2.0
 date-released: 2026-08-05
 license: MIT
 repository-code: "https://github.com/louisgestin001-cmd/portfolio/tree/main/projects/ng-cell-lab"
@@ -14,3 +14,5 @@ keywords:
   - experimental neural cells
   - neural architecture search
   - memory dynamics
+  - heterogeneous MLP
+  - gated feed-forward networks
