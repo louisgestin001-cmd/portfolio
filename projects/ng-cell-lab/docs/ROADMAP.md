@@ -53,3 +53,12 @@ Perform a systematic literature search covering:
 - low-rank recurrent state summaries.
 
 Only after this audit should any exact novelty claim be made.
+
+## Milestone 5 — TriSpecies validation
+
+- compare GELU, ReLU, SwiGLU, GEGLU, species A only, 1:1:1, 3:2:1, and learned routing inside the same Transformer;
+- use equal parameter and FLOP budgets rather than width alone;
+- measure language-model validation loss, algorithmic tasks, corruption robustness, and throughput;
+- inspect branch usage, dead projections, gradient routing, and species specialization;
+- implement a fused CUDA/Triton kernel if the accuracy signal survives larger benchmarks;
+- perform a novelty audit covering heterogeneous activations, max/min networks, lattice networks, gated MLPs, and mixture-of-activation architectures.
