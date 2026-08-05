@@ -9,32 +9,41 @@ French student interested in **artificial intelligence, formal mathematics, prog
 This repository is the central home for my technical projects. Each project includes its own documentation, reproducibility instructions, limitations, and—when relevant—a precise statement describing how artificial intelligence was used.
 
 [![Two-Families Lean checks](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/two-families-ci.yml/badge.svg)](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/two-families-ci.yml)
+[![NG Cell Lab checks](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-cell-lab-ci.yml/badge.svg)](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-cell-lab-ci.yml)
 [![NG-StateMin checks](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-statemin-ci.yml/badge.svg)](https://github.com/louisgestin001-cmd/portfolio/actions/workflows/ng-statemin-ci.yml)
 
 ## Projects
 
-### NG-StateMin-U1
+### NG Cell Lab
 
-A preliminary PyTorch research artifact for the recurrent law
+A unified PyTorch research zoo for compact recurrent and collectively modulated neural-cell laws.
 
-\[
-s_t = y_t = \min(x_t-s_{t-1},-x_t).
-\]
+**Cells currently included**
+
+- **NG-StateMin-U1:** minimal piecewise-linear oscillatory memory;
+- **NG-ShiftCompare-Mul:** shifted multiplicative recurrent comparator;
+- **NG-EnergyMax-1:** energy-modulated two-frame operator;
+- **NG-EnergyMax-2:** derived sparse event/extremum memory;
+- **NG-LagMean-1:** rank-one delayed collective modulator.
 
 **Highlights**
 
-- parameter-free elementwise recurrent transition;
-- exact algebraic analysis of its `-1` or `0` temporal derivative;
-- demonstrated period-two memory regime;
-- explicit odd/even length stress test revealing a severe parity failure mode;
-- fair same-parameter comparisons with scalar ReLU and tanh recurrences;
-- reusable package, tests, benchmark script, results, CI, citation metadata, and AI-use disclosure.
+- exact equations and a common `(input, state) -> (output, next_state)` API;
+- algebraic tests for memory horizon, period-two behavior, clipping, and collective-state collapse;
+- normalized results with protocol identifiers to prevent unfair comparisons;
+- explicit documentation of positive results, negative results, and structural failure modes;
+- CI on Python 3.10 and 3.12;
+- transparent distinction between user-supplied candidates and derived variants.
 
-**Open the project:** [`projects/ng-statemin-u1/`](projects/ng-statemin-u1/README.md)
+**Open the project:** [`projects/ng-cell-lab/`](projects/ng-cell-lab/README.md)
 
-**Experimental report:** [`docs/REPORT.md`](projects/ng-statemin-u1/docs/REPORT.md)
+**Equations and diagnostics:** [`docs/CELLS.md`](projects/ng-cell-lab/docs/CELLS.md)
 
-> Preliminary result: promising as an oscillatory memory primitive, not yet a general replacement for standard recurrent cells.
+**Experimental results:** [`docs/RESULTS.md`](projects/ng-cell-lab/docs/RESULTS.md)
+
+> Preliminary research: the cells are currently best viewed as specialized primitives rather than replacements for standard RNN, GRU, LSTM, SSM, or attention architectures.
+
+The original standalone **NG-StateMin-U1** artifact remains available at [`projects/ng-statemin-u1/`](projects/ng-statemin-u1/README.md) for its initial package and benchmark history.
 
 ### Two-Families Theorems in Lean 4
 
@@ -74,20 +83,18 @@ portfolio/
 ├── README.md
 ├── LICENSE
 ├── .github/workflows/
+│   ├── ng-cell-lab-ci.yml
 │   ├── ng-statemin-ci.yml
 │   └── two-families-ci.yml
 └── projects/
-    ├── ng-statemin-u1/
+    ├── ng-cell-lab/
     │   ├── benchmarks/
     │   ├── docs/
     │   ├── results/
     │   ├── src/
     │   └── tests/
+    ├── ng-statemin-u1/
     └── two-families-lean/
-        ├── RequestProject/
-        ├── paper/
-        ├── scripts/
-        └── docs/
 ```
 
 Future projects will be added under `projects/`, while this README remains the main index.
