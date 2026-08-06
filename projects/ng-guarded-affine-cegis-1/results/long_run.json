@@ -1,0 +1,9 @@
+{
+  "length": 100000,
+  "true_state": [7, 0, 0],
+  "compiled_relative_state": [3, -1, 0],
+  "expected_relative_state": [3, -1, 0],
+  "exact": true,
+  "protocol_seconds": 0.1476253849996283,
+  "compiled_seconds": 0.31626858900017396
+}
