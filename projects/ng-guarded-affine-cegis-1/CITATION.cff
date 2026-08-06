@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "NG-GuardedAffine-CEGIS-1"
+message: "Cite the exact artifact version or repository commit used."
+type: software
+authors:
+  - family-names: Gestin
+    given-names: Louis
+version: 0.1.0
+date-released: 2026-08-06
+license: MIT
