@@ -1,0 +1,16 @@
+{
+  "dimension": 3,
+  "basis": [
+    {"positive": "retry_up", "negative": "retry_down", "lower": -1, "upper": 2, "pair_residual": 4.2855183991760724e-15},
+    {"positive": "tick", "negative": "untick", "lower": null, "upper": null, "pair_residual": 6.6705980262729836e-15},
+    {"positive": "credit_up", "negative": "credit_down", "lower": -4, "upper": 3, "pair_residual": 6.81817565178807e-15}
+  ],
+  "counterexamples": [["credit_up",85],["credit_up",86],["retry_up",140],["ack",85],["timeout",85],["timeout",140],["timeout",86],["timeout",198]],
+  "rule_depths": {"credit_up":1,"credit_down":1,"retry_up":1,"retry_down":1,"tick":0,"untick":0,"send":1,"ack":1,"timeout":2,"reset":0},
+  "leaf_counts": {"credit_up":2,"credit_down":2,"retry_up":2,"retry_down":2,"tick":1,"untick":1,"send":2,"ack":2,"timeout":3,"reset":1},
+  "exhaustive_transition_agreement": 1.0,
+  "long_trace_agreement": 1.0,
+  "safety_proved": true,
+  "query_count": 3916,
+  "accepted": true
+}
